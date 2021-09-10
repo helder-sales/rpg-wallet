@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from decimal import Decimal
 from typing import Union
 
@@ -102,7 +100,8 @@ class Wallet:
             coin, integer_value
         )
         quantity_converted_decimal: int = (
-            self.__get_exchange_value_from_lowest_coin(coin) * decimal_value
+            self.__get_exchange_value_relative_from_lowest_coin(coin)
+            * decimal_value
         ) // 100
         self.__rearrange_coins_to_lowest()
         last_coin_idx: int = len(self.__coin) - 1
@@ -177,9 +176,11 @@ class Wallet:
 
             return quantity_converted
 
-    def __get_exchange_value_from_lowest_coin(self, coin: str) -> int:
+    def __get_exchange_value_relative_from_lowest_coin(
+        self, coin_base: str
+    ) -> int:
         for idx, item in enumerate(self.__coin):
-            if coin == item[0]:
+            if coin_base == item[0]:
                 exchange_in_terms_of_lowest_coin: int = 1
 
                 for i in range(idx + 1, len(self.__coin)):
