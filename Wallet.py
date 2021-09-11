@@ -52,19 +52,20 @@ class Wallet:
         decimal_value: int
         integer_value, decimal_value = Wallet.__separate_decimal_value(quantity)
         self.__coin[coin]["quantity"] += integer_value
-        next_coin_to_add_decimal_part = self.__coin.keys().index(coin) + 1
+        next_coin_idx_to_add_decimal_part: int = (
+            self.__coin.keys().index(coin) + 1
+        )
 
-        if next_coin_to_add_decimal_part < len(self.__coin):
+        if next_coin_idx_to_add_decimal_part < len(self.__coin):
+            coin_to_add_decimal_part: str = self.__coin.keys()[
+                next_coin_idx_to_add_decimal_part
+            ]
             decimal_value = (
                 decimal_value
-                * self.__coin.values()[next_coin_to_add_decimal_part][
-                    "exchange_value"
-                ]
+                * self.__coin[coin_to_add_decimal_part]["exchange_value"]
             ) // 100
 
-            self.__coin.values()[next_coin_to_add_decimal_part][
-                "quantity"
-            ] += decimal_value
+            self.__coin[coin_to_add_decimal_part]["quantity"] += decimal_value
 
         self.__rearrange_coins_to_fit_exchange()
 
@@ -77,10 +78,10 @@ class Wallet:
                 coin, quantity
             )
             self.__rearrange_coins_to_lowest()
-            last_coin_idx = len(self.__coin) - 1
+            last_coin_idx: int = len(self.__coin) - 1
+            last_coin: str = self.__coin.keys()[last_coin_idx]
             balance: int = (
-                self.__coin.values()[last_coin_idx]["quantity"]
-                - quantity_converted
+                self.__coin[last_coin]["quantity"] - quantity_converted
             )
 
             if balance < 0:
@@ -88,7 +89,7 @@ class Wallet:
 
                 raise ValueError("Insufficient coins")
 
-            self.__coin.values()[last_coin_idx]["quantity"] = balance
+            self.__coin[last_coin]["quantity"] = balance
             self.__rearrange_coins_to_fit_exchange()
 
             return
@@ -105,7 +106,8 @@ class Wallet:
         ) // 100
         self.__rearrange_coins_to_lowest()
         last_coin_idx: int = len(self.__coin) - 1
-        balance: int = self.__coin.values()[last_coin_idx]["quantity"] - (
+        last_coin: str = self.__coin.keys()[last_coin_idx]
+        balance: int = self.__coin[last_coin]["quantity"] - (
             quantity_converted_integer + quantity_converted_decimal
         )
 
@@ -114,7 +116,7 @@ class Wallet:
 
             raise ValueError("Insufficient coins")
 
-        self.__coin.values()[last_coin_idx]["quantity"] = balance
+        self.__coin[last_coin]["quantity"] = balance
         self.__rearrange_coins_to_fit_exchange()
 
     def get_coin(self, coin: str) -> int:
@@ -127,26 +129,28 @@ class Wallet:
         coin_promoted: int = 0
 
         for idx in range(len(self.__coin) - 1, -1, -1):
+            current_coin: str = self.__coin.keys()[idx]
+
             if idx > 0:
                 if coin_promoted > 0:
-                    self.__coin.values()[idx]["quantity"] += coin_promoted
+                    self.__coin[current_coin]["quantity"] += coin_promoted
                     coin_promoted = 0
 
-                coin_quantity: int = self.__coin.values()[idx]["quantity"]
-                coin__exchange_value: int = self.__coin.values()[idx][
+                coin_quantity: int = self.__coin[current_coin]["quantity"]
+                coin__exchange_value: int = self.__coin[current_coin][
                     "exchange_value"
                 ]
 
                 while (
                     coin_quantity >= coin__exchange_value and coin_quantity > 0
                 ):
-                    self.__coin.values()[idx][
+                    self.__coin[current_coin][
                         "quantity"
                     ] -= coin__exchange_value
                     coin_promoted += 1
-                    coin_quantity = self.__coin.values()[idx]["quantity"]
+                    coin_quantity = self.__coin[current_coin]["quantity"]
 
-        self.__coin.values()[idx]["quantity"] += coin_promoted
+        self.__coin[current_coin]["quantity"] += coin_promoted
 
     def __rearrange_coins_to_lowest(
         self,
@@ -155,25 +159,27 @@ class Wallet:
     ) -> Union[None, int]:
         if coin is None:
             for idx in range(0, len(self.__coin) - 1):
-                current_coin_quantity: int = self.__coin.values()[idx][
+                current_coin: str = self.__coin.keys()[idx]
+                current_coin_quantity: int = self.__coin[current_coin][
                     "quantity"
                 ]
-                next_coin_exchange_value: int = self.__coin.values()[idx + 1][
+                next_coin: str = self.__coin.keys()[idx + 1]
+                next_coin_exchange_value: int = self.__coin[next_coin][
                     "exchange_value"
                 ]
-                self.__coin.values()[idx + 1]["quantity"] = (
+                self.__coin[next_coin]["quantity"] = (
                     current_coin_quantity * next_coin_exchange_value
-                    + self.__coin.values()[idx + 1]["quantity"]
+                    + self.__coin[next_coin]["quantity"]
                 )
-                self.__coin.values()[idx]["quantity"] = 0
+                self.__coin[current_coin]["quantity"] = 0
 
         else:
             quantity_converted: int = 0
+            idx_of_current_coin: int = self.__coin.keys().index(coin)
 
-            for idx in range(
-                self.__coin.keys().index(coin), len(self.__coin) - 1
-            ):
-                next_coin_exchange_value = self.__coin.values()[idx + 1][
+            for idx in range(idx_of_current_coin, len(self.__coin) - 1):
+                next_coin: str = self.__coin.keys()[idx + 1]
+                next_coin_exchange_value: int = self.__coin[next_coin][
                     "exchange_value"
                 ]
                 quantity = quantity * next_coin_exchange_value
@@ -186,11 +192,13 @@ class Wallet:
         self, coin_base: str
     ) -> int:
         exchange_in_terms_of_lowest_coin: int = 1
+        idx_of_next_coin_from_coin_base: int = (
+            self.__coin.keys().index(coin_base) + 1
+        )
 
-        for i in range(
-            self.__coin.keys().index(coin_base) + 1, len(self.__coin)
-        ):
-            exchange_in_terms_of_lowest_coin *= self.__coin.values()[i][
+        for i in range(idx_of_next_coin_from_coin_base, len(self.__coin)):
+            current_coin: str = self.__coin.keys()[i]
+            exchange_in_terms_of_lowest_coin *= self.__coin[current_coin][
                 "exchange_value"
             ]
 
