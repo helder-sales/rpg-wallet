@@ -1,8 +1,8 @@
 from decimal import Decimal
 from typing import Union
 
-from persistqueue import Queue
 from indexed import IndexedOrderedDict
+from persistqueue import Queue
 
 
 class Wallet:
@@ -45,26 +45,22 @@ class Wallet:
         if type(quantity) == int or int((quantity % 1) * 100) == 0:
             self.__coin[coin]["quantity"] += quantity // 1
             self.__rearrange_coins_to_fit_exchange()
-
             return
 
         integer_value: int
         decimal_value: int
         integer_value, decimal_value = Wallet.__separate_decimal_value(quantity)
         self.__coin[coin]["quantity"] += integer_value
-        next_coin_idx_to_add_decimal_part: int = (
-            self.__coin.keys().index(coin) + 1
-        )
+        next_coin_idx_to_add_decimal_part: int = self.__get_coin_idx(coin) + 1
 
         if next_coin_idx_to_add_decimal_part < len(self.__coin):
-            coin_to_add_decimal_part: str = self.__coin.keys()[
+            coin_to_add_decimal_part: str = self.__get_coin_name(
                 next_coin_idx_to_add_decimal_part
-            ]
+            )
             decimal_value = (
                 decimal_value
                 * self.__coin[coin_to_add_decimal_part]["exchange_value"]
             ) // 100
-
             self.__coin[coin_to_add_decimal_part]["quantity"] += decimal_value
 
         self.__rearrange_coins_to_fit_exchange()
@@ -79,19 +75,17 @@ class Wallet:
             )
             self.__rearrange_coins_to_lowest()
             last_coin_idx: int = len(self.__coin) - 1
-            last_coin: str = self.__coin.keys()[last_coin_idx]
+            last_coin: str = self.__get_coin_name(last_coin_idx)
             balance: int = (
                 self.__coin[last_coin]["quantity"] - quantity_converted
             )
 
             if balance < 0:
                 self.__rearrange_coins_to_fit_exchange()
-
                 raise ValueError("Insufficient coins")
 
             self.__coin[last_coin]["quantity"] = balance
             self.__rearrange_coins_to_fit_exchange()
-
             return
 
         integer_value: int
@@ -106,14 +100,13 @@ class Wallet:
         ) // 100
         self.__rearrange_coins_to_lowest()
         last_coin_idx: int = len(self.__coin) - 1
-        last_coin: str = self.__coin.keys()[last_coin_idx]
+        last_coin: str = self.__get_coin_name(last_coin_idx)
         balance: int = self.__coin[last_coin]["quantity"] - (
             quantity_converted_integer + quantity_converted_decimal
         )
 
         if balance < 0:
             self.__rearrange_coins_to_fit_exchange()
-
             raise ValueError("Insufficient coins")
 
         self.__coin[last_coin]["quantity"] = balance
@@ -125,11 +118,17 @@ class Wallet:
     def get_coin_exchange_value(self, coin: str) -> int:
         return self.__coin[coin]["exchange_value"]
 
+    def __get_coin_name(self, idx: int) -> str:
+        return self.__coin.keys()[idx]
+
+    def __get_coin_idx(self, coin: str) -> int:
+        return self.__coin.keys().index(coin)
+
     def __rearrange_coins_to_fit_exchange(self) -> None:
         coin_promoted: int = 0
 
         for idx in range(len(self.__coin) - 1, -1, -1):
-            current_coin: str = self.__coin.keys()[idx]
+            current_coin: str = self.__get_coin_name(idx)
 
             if idx > 0:
                 if coin_promoted > 0:
@@ -159,11 +158,11 @@ class Wallet:
     ) -> Union[None, int]:
         if coin is None:
             for idx in range(0, len(self.__coin) - 1):
-                current_coin: str = self.__coin.keys()[idx]
+                current_coin: str = self.__get_coin_name(idx)
                 current_coin_quantity: int = self.__coin[current_coin][
                     "quantity"
                 ]
-                next_coin: str = self.__coin.keys()[idx + 1]
+                next_coin: str = self.__get_coin_name(idx + 1)
                 next_coin_exchange_value: int = self.__coin[next_coin][
                     "exchange_value"
                 ]
@@ -175,17 +174,16 @@ class Wallet:
 
         else:
             quantity_converted: int = 0
-            idx_of_current_coin: int = self.__coin.keys().index(coin)
+            idx_of_current_coin: int = self.__get_coin_idx(coin)
 
             for idx in range(idx_of_current_coin, len(self.__coin) - 1):
-                next_coin: str = self.__coin.keys()[idx + 1]
+                next_coin: str = self.__get_coin_name(idx + 1)
                 next_coin_exchange_value: int = self.__coin[next_coin][
                     "exchange_value"
                 ]
                 quantity = quantity * next_coin_exchange_value
 
             quantity_converted = quantity
-
             return quantity_converted
 
     def __get_exchange_value_relative_from_lowest_coin(
@@ -193,11 +191,11 @@ class Wallet:
     ) -> int:
         exchange_in_terms_of_lowest_coin: int = 1
         idx_of_next_coin_from_coin_base: int = (
-            self.__coin.keys().index(coin_base) + 1
+            self.__get_coin_idx(coin_base) + 1
         )
 
-        for i in range(idx_of_next_coin_from_coin_base, len(self.__coin)):
-            current_coin: str = self.__coin.keys()[i]
+        for idx in range(idx_of_next_coin_from_coin_base, len(self.__coin)):
+            current_coin: str = self.__get_coin_name(idx)
             exchange_in_terms_of_lowest_coin *= self.__coin[current_coin][
                 "exchange_value"
             ]
@@ -211,7 +209,6 @@ class Wallet:
         qty_as_str_trunc = qty_as_str[0 : (idx_of_dot + 2) + 1]
         decimal_value: int = int((Decimal(qty_as_str_trunc) % 1) * 100)
         integer_value: int = int(quantity // 1)
-
         return integer_value, decimal_value
 
     def __place_wallet_contents_in_queue(
@@ -241,7 +238,6 @@ class Wallet:
             dict[int]
         ] = self.__retrieve_wallet_contents_from_queue()
         self.__place_wallet_contents_in_queue(wallet_content)
-
         return wallet_content
 
     def save_wallet_contents(self) -> None:
