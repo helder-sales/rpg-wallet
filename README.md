@@ -7,6 +7,7 @@ Please install the python dependencies below manually, or from the requirements.
 ```bash
 pytest==6.2.4
 persist-queue==0.6.0
+indexed==1.2.1
 ```
 
 Usage: just run RPGWallet.py and follow the instructions from there.
