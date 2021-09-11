@@ -4,9 +4,8 @@ from typing import Union
 
 from Wallet import Wallet
 
-
 wallet_id: str = input("Please enter the wallet id: ")
-wallet = Wallet(int(wallet_id))
+wallet: Wallet = Wallet(int(wallet_id))
 
 if wallet.empty_wallet:
     coin_names: list[str] = []
