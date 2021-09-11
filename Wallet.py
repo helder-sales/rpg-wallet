@@ -43,74 +43,20 @@ class Wallet:
             return
 
         if type(quantity) == int or int((quantity % 1) * 100) == 0:
-            self.__coin[coin]["quantity"] += quantity // 1
-            self.__rearrange_coins_to_fit_exchange()
+            self.__add_coin_int(coin, quantity)
             return
 
-        integer_value: int
-        decimal_value: int
-        integer_value, decimal_value = Wallet.__separate_decimal_value(quantity)
-        self.__coin[coin]["quantity"] += integer_value
-        next_coin_idx_to_add_decimal_part: int = self.__get_coin_idx(coin) + 1
-
-        if next_coin_idx_to_add_decimal_part < len(self.__coin):
-            coin_to_add_decimal_part: str = self.__get_coin_name(
-                next_coin_idx_to_add_decimal_part
-            )
-            decimal_value = (
-                decimal_value
-                * self.__coin[coin_to_add_decimal_part]["exchange_value"]
-            ) // 100
-            self.__coin[coin_to_add_decimal_part]["quantity"] += decimal_value
-
-        self.__rearrange_coins_to_fit_exchange()
+        self.__add_coin_float(coin, quantity)
 
     def remove_coin(self, coin: str, quantity: Union[int, float]) -> None:
         if quantity == 0:
             return
 
         if type(quantity) == int or int((quantity % 1) * 100) == 0:
-            quantity_converted: int = self.__rearrange_coins_to_lowest(
-                coin, quantity
-            )
-            self.__rearrange_coins_to_lowest()
-            last_coin_idx: int = len(self.__coin) - 1
-            last_coin: str = self.__get_coin_name(last_coin_idx)
-            balance: int = (
-                self.__coin[last_coin]["quantity"] - quantity_converted
-            )
-
-            if balance < 0:
-                self.__rearrange_coins_to_fit_exchange()
-                raise ValueError("Insufficient coins")
-
-            self.__coin[last_coin]["quantity"] = balance
-            self.__rearrange_coins_to_fit_exchange()
+            self.__remove_coin_int(coin, quantity)
             return
 
-        integer_value: int
-        decimal_value: int
-        integer_value, decimal_value = Wallet.__separate_decimal_value(quantity)
-        quantity_converted_integer: int = self.__rearrange_coins_to_lowest(
-            coin, integer_value
-        )
-        quantity_converted_decimal: int = (
-            self.__get_exchange_value_relative_from_lowest_coin(coin)
-            * decimal_value
-        ) // 100
-        self.__rearrange_coins_to_lowest()
-        last_coin_idx: int = len(self.__coin) - 1
-        last_coin: str = self.__get_coin_name(last_coin_idx)
-        balance: int = self.__coin[last_coin]["quantity"] - (
-            quantity_converted_integer + quantity_converted_decimal
-        )
-
-        if balance < 0:
-            self.__rearrange_coins_to_fit_exchange()
-            raise ValueError("Insufficient coins")
-
-        self.__coin[last_coin]["quantity"] = balance
-        self.__rearrange_coins_to_fit_exchange()
+        self.__remove_coin_float(coin, quantity)
 
     def get_coin(self, coin: str) -> int:
         return self.__coin[coin]["quantity"]
@@ -210,6 +156,70 @@ class Wallet:
         decimal_value: int = int((Decimal(qty_as_str_trunc) % 1) * 100)
         integer_value: int = int(quantity // 1)
         return integer_value, decimal_value
+
+    def __add_coin_int(self, coin: str, quantity: int) -> None:
+        self.__coin[coin]["quantity"] += quantity // 1
+        self.__rearrange_coins_to_fit_exchange()
+
+    def __add_coin_float(self, coin: str, quantity: float) -> None:
+        integer_value: int
+        decimal_value: int
+        integer_value, decimal_value = Wallet.__separate_decimal_value(quantity)
+        self.__coin[coin]["quantity"] += integer_value
+        next_coin_idx_to_add_decimal_part: int = self.__get_coin_idx(coin) + 1
+
+        if next_coin_idx_to_add_decimal_part < len(self.__coin):
+            coin_to_add_decimal_part: str = self.__get_coin_name(
+                next_coin_idx_to_add_decimal_part
+            )
+            decimal_value = (
+                decimal_value
+                * self.__coin[coin_to_add_decimal_part]["exchange_value"]
+            ) // 100
+            self.__coin[coin_to_add_decimal_part]["quantity"] += decimal_value
+
+        self.__rearrange_coins_to_fit_exchange()
+
+    def __remove_coin_int(self, coin: str, quantity: int) -> None:
+        quantity_converted: int = self.__rearrange_coins_to_lowest(
+            coin, quantity
+        )
+        self.__rearrange_coins_to_lowest()
+        last_coin_idx: int = len(self.__coin) - 1
+        last_coin: str = self.__get_coin_name(last_coin_idx)
+        balance: int = self.__coin[last_coin]["quantity"] - quantity_converted
+
+        if balance < 0:
+            self.__rearrange_coins_to_fit_exchange()
+            raise ValueError("Insufficient coins")
+
+        self.__coin[last_coin]["quantity"] = balance
+        self.__rearrange_coins_to_fit_exchange()
+
+    def __remove_coin_float(self, coin: str, quantity: float) -> None:
+        integer_value: int
+        decimal_value: int
+        integer_value, decimal_value = Wallet.__separate_decimal_value(quantity)
+        quantity_converted_integer: int = self.__rearrange_coins_to_lowest(
+            coin, integer_value
+        )
+        quantity_converted_decimal: int = (
+            self.__get_exchange_value_relative_from_lowest_coin(coin)
+            * decimal_value
+        ) // 100
+        self.__rearrange_coins_to_lowest()
+        last_coin_idx: int = len(self.__coin) - 1
+        last_coin: str = self.__get_coin_name(last_coin_idx)
+        balance: int = self.__coin[last_coin]["quantity"] - (
+            quantity_converted_integer + quantity_converted_decimal
+        )
+
+        if balance < 0:
+            self.__rearrange_coins_to_fit_exchange()
+            raise ValueError("Insufficient coins")
+
+        self.__coin[last_coin]["quantity"] = balance
+        self.__rearrange_coins_to_fit_exchange()
 
     def __place_wallet_contents_in_queue(
         self, contents: IndexedOrderedDict[dict[int]]
