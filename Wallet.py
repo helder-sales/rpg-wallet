@@ -119,7 +119,6 @@ class Wallet:
                 self.__coin[current_coin]["quantity"] = 0
 
         else:
-            quantity_converted: int = 0
             idx_of_current_coin: int = self.__get_coin_idx(coin)
 
             for idx in range(idx_of_current_coin, len(self.__coin) - 1):
@@ -129,8 +128,7 @@ class Wallet:
                 ]
                 quantity = quantity * next_coin_exchange_value
 
-            quantity_converted = quantity
-            return quantity_converted
+            return quantity
 
     def __get_exchange_value_in_terms_of_lowest_coin(
         self, coin_base: str
@@ -181,9 +179,7 @@ class Wallet:
         self.__convert_coins_to_integer()
 
     def __remove_coin_int(self, coin: str, quantity: int) -> None:
-        quantity_converted: int = self.__convert_coins_to_lowest(
-            coin, quantity
-        )
+        quantity_converted: int = self.__convert_coins_to_lowest(coin, quantity)
         self.__convert_coins_to_lowest()
         last_coin_idx: int = len(self.__coin) - 1
         last_coin: str = self.__get_coin_name(last_coin_idx)
