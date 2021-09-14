@@ -7,7 +7,7 @@ from Wallet import Wallet
 
 class TestWallet:
     @pytest.fixture
-    def set_up_class(self) -> None:
+    def wallet_object(self) -> None:
         self.wallet = Wallet()
 
         yield
@@ -20,16 +20,16 @@ class TestWallet:
         shutil.rmtree("./wallet_0")
 
     @pytest.fixture
-    def set_up_coin_types(
+    def coin_types(
         self,
-        set_up_class: pytest.fixture,
+        wallet_object: pytest.fixture,
     ) -> None:
         self.wallet.create_coins("gold", "silver", "bronze")
 
     @pytest.fixture
-    def set_up_coin_types_and_exchange_values(
+    def coin_types_and_exchange_values(
         self,
-        set_up_coin_types: pytest.fixture,
+        coin_types: pytest.fixture,
     ) -> None:
         self.wallet.add_coin_exchange_values("gold", 0)
         self.wallet.add_coin_exchange_values("silver", 100)
@@ -46,7 +46,7 @@ class TestWallet:
 
     def test_if_creates_coins(
         self,
-        set_up_class: pytest.fixture,
+        wallet_object: pytest.fixture,
     ):
         self.wallet.create_coins("gold", "silver", "bronze")
 
@@ -60,7 +60,7 @@ class TestWallet:
 
     def test_if_adds_coin_exchange_values(
         self,
-        set_up_coin_types: pytest.fixture,
+        coin_types: pytest.fixture,
     ):
         expected_gold_coins = 0
         expected_silver_coins = 100
@@ -84,7 +84,7 @@ class TestWallet:
 
     def test_if_adds_coins_correctly(
         self,
-        set_up_coin_types_and_exchange_values: pytest.fixture,
+        coin_types_and_exchange_values: pytest.fixture,
     ):
         expected_gold_coins = 10
         expected_silver_coins = 51
@@ -106,7 +106,7 @@ class TestWallet:
 
     def test_if_adds_coins_up_to_two_decimal_places_and_ignores_beyond_that(
         self,
-        set_up_coin_types_and_exchange_values: pytest.fixture,
+        coin_types_and_exchange_values: pytest.fixture,
     ):
         expected_gold_coins = 1
         expected_silver_coins = 50
@@ -130,7 +130,7 @@ class TestWallet:
 
     def test_if_removes_coin_correctly(
         self,
-        set_up_coin_types_and_exchange_values: pytest.fixture,
+        coin_types_and_exchange_values: pytest.fixture,
     ):
         expected_gold_coins = 100
         expected_silver_coins = 0
@@ -155,7 +155,7 @@ class TestWallet:
 
     def test_if_removes_coin_up_to_two_decimal_places_and_ignores_beyond_that(
         self,
-        set_up_coin_types_and_exchange_values: pytest.fixture,
+        coin_types_and_exchange_values: pytest.fixture,
     ):
         expected_gold_coins = 1
         expected_silver_coins = 49
@@ -182,7 +182,7 @@ class TestWallet:
 
     def test_if_removes_coin_and_raises_exception_correctly_when_balance_is_negative(
         self,
-        set_up_coin_types_and_exchange_values: pytest.fixture,
+        coin_types_and_exchange_values: pytest.fixture,
     ):
         expected_exception_message = "Insufficient coins"
 
@@ -204,7 +204,7 @@ class TestWallet:
 
     def test_if_prints_wallet_contents_successfully(
         self,
-        set_up_coin_types_and_exchange_values: pytest.fixture,
+        coin_types_and_exchange_values: pytest.fixture,
     ):
         expected_returned_str_from_object = (
             "gold: 100\n" "silver: 10\n" "bronze: 1\n"
@@ -221,7 +221,7 @@ class TestWallet:
 
     def test_if_saves_wallet_contents_successfully(
         self,
-        set_up_coin_types_and_exchange_values: pytest.fixture,
+        coin_types_and_exchange_values: pytest.fixture,
     ):
         self.wallet.save_wallet_contents()
 
