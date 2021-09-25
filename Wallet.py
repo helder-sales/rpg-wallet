@@ -3,6 +3,7 @@ from typing import Union
 
 from indexed import IndexedOrderedDict
 from persistqueue import Queue
+from copy import deepcopy
 
 
 class Wallet:
@@ -24,12 +25,7 @@ class Wallet:
             self.empty_wallet = False
 
     def __str__(self) -> str:
-        wallet_contents: str = ""
-
-        for coin in self.__coin:
-            wallet_contents += f"{coin}: {self.__coin[coin]['quantity']}\n"
-
-        return wallet_contents
+        return self.__format_coins_into_a_string(self.__coin)
 
     def create_coins(self, *coins: str) -> None:
         for coin in coins:
@@ -70,32 +66,37 @@ class Wallet:
     def __get_coin_idx(self, coin: str) -> int:
         return self.__coin.keys().index(coin)
 
-    def __convert_coins_to_integer(self) -> None:
+    def __convert_coins_to_integer(
+        self,
+        coins: IndexedOrderedDict[dict[int]],
+    ) -> IndexedOrderedDict[dict[int]]:
+        converted_coins: IndexedOrderedDict[dict[int]] = deepcopy(coins)
         coin_promoted: int = 0
 
-        for idx in range(len(self.__coin) - 1, -1, -1):
+        for idx in range(len(converted_coins) - 1, -1, -1):
             current_coin: str = self.__get_coin_name(idx)
 
             if idx > 0:
                 if coin_promoted > 0:
-                    self.__coin[current_coin]["quantity"] += coin_promoted
+                    converted_coins[current_coin]["quantity"] += coin_promoted
                     coin_promoted = 0
 
-                coin_quantity: int = self.__coin[current_coin]["quantity"]
-                coin__exchange_value: int = self.__coin[current_coin][
+                coin_quantity: int = converted_coins[current_coin]["quantity"]
+                coin_exchange_value: int = converted_coins[current_coin][
                     "exchange_value"
                 ]
 
                 while (
-                    coin_quantity >= coin__exchange_value and coin_quantity > 0
+                    coin_quantity >= coin_exchange_value and coin_quantity > 0
                 ):
-                    self.__coin[current_coin][
+                    converted_coins[current_coin][
                         "quantity"
-                    ] -= coin__exchange_value
+                    ] -= coin_exchange_value
                     coin_promoted += 1
-                    coin_quantity = self.__coin[current_coin]["quantity"]
+                    coin_quantity = converted_coins[current_coin]["quantity"]
 
-        self.__coin[current_coin]["quantity"] += coin_promoted
+        converted_coins[current_coin]["quantity"] += coin_promoted
+        return converted_coins
 
     def __convert_coins_to_lowest(
         self,
@@ -131,7 +132,8 @@ class Wallet:
             return quantity
 
     def __get_exchange_value_in_terms_of_lowest_coin(
-        self, coin_base: str
+        self,
+        coin_base: str,
     ) -> int:
         exchange_in_terms_of_lowest_coin: int = 1
         idx_of_next_coin_from_coin_base: int = (
@@ -148,16 +150,16 @@ class Wallet:
 
     @staticmethod
     def __separate_decimal_value(quantity: float) -> tuple[int, int]:
-        qty_as_str = f"{float(quantity)}"
-        idx_of_dot = qty_as_str.index(".")
-        qty_as_str_trunc = qty_as_str[0 : (idx_of_dot + 2) + 1]
+        qty_as_str: str = f"{float(quantity)}"
+        idx_of_dot: int = qty_as_str.index(".")
+        qty_as_str_trunc: str = qty_as_str[0 : (idx_of_dot + 2) + 1]
         decimal_value: int = int((Decimal(qty_as_str_trunc) % 1) * 100)
         integer_value: int = int(quantity // 1)
         return integer_value, decimal_value
 
     def __add_coin_int(self, coin: str, quantity: int) -> None:
         self.__coin[coin]["quantity"] += quantity // 1
-        self.__convert_coins_to_integer()
+        self.__coin = self.__convert_coins_to_integer(self.__coin)
 
     def __add_coin_float(self, coin: str, quantity: float) -> None:
         integer_value: int
@@ -176,7 +178,7 @@ class Wallet:
             ) // 100
             self.__coin[coin_to_add_decimal_part]["quantity"] += decimal_value
 
-        self.__convert_coins_to_integer()
+        self.__coin = self.__convert_coins_to_integer(self.__coin)
 
     def __remove_coin_int(self, coin: str, quantity: int) -> None:
         quantity_converted: int = self.__convert_coins_to_lowest(coin, quantity)
@@ -186,11 +188,12 @@ class Wallet:
         balance: int = self.__coin[last_coin]["quantity"] - quantity_converted
 
         if balance < 0:
-            self.__convert_coins_to_integer()
-            raise ValueError("Insufficient coins")
+            missed_coins: str = self.__get_missing_coins(balance, last_coin)
+            self.__coin = self.__convert_coins_to_integer(self.__coin)
+            raise ValueError(f"Insufficient coins! Missing:\n\n{missed_coins}")
 
         self.__coin[last_coin]["quantity"] = balance
-        self.__convert_coins_to_integer()
+        self.__coin = self.__convert_coins_to_integer(self.__coin)
 
     def __remove_coin_float(self, coin: str, quantity: float) -> None:
         integer_value: int
@@ -211,14 +214,16 @@ class Wallet:
         )
 
         if balance < 0:
-            self.__convert_coins_to_integer()
-            raise ValueError("Insufficient coins")
+            missed_coins: str = self.__get_missing_coins(balance, last_coin)
+            self.__coin = self.__convert_coins_to_integer(self.__coin)
+            raise ValueError(f"Insufficient coins! Missing:\n\n{missed_coins}")
 
         self.__coin[last_coin]["quantity"] = balance
-        self.__convert_coins_to_integer()
+        self.__coin = self.__convert_coins_to_integer(self.__coin)
 
     def __place_wallet_contents_in_queue(
-        self, contents: IndexedOrderedDict[dict[int]]
+        self,
+        contents: IndexedOrderedDict[dict[int]],
     ) -> None:
         self.wallet_queue_file.put(contents)
 
@@ -245,6 +250,27 @@ class Wallet:
         ] = self.__retrieve_wallet_contents_from_queue()
         self.__place_wallet_contents_in_queue(wallet_content)
         return wallet_content
+
+    def __format_coins_into_a_string(
+        self,
+        coins: IndexedOrderedDict[dict[int]],
+    ) -> str:
+        coins_string: str = ""
+
+        for coin in coins:
+            coins_string += f"{coin}: {coins[coin]['quantity']}\n"
+
+        return coins_string
+
+    def __get_missing_coins(
+        self,
+        balance: int,
+        last_coin: str,
+    ) -> str:
+        missed_coins: IndexedOrderedDict[dict[int]] = deepcopy(self.__coin)
+        missed_coins[last_coin]["quantity"] = abs(balance)
+        missed_coins = self.__convert_coins_to_integer(missed_coins)
+        return self.__format_coins_into_a_string(missed_coins)
 
     def save_wallet_contents(self) -> None:
         self.__retrieve_wallet_contents_from_queue()
