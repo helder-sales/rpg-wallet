@@ -16,7 +16,6 @@ class TestWallet:
             self.wallet.wallet_queue_file.get()
 
         del self.wallet.wallet_queue_file
-
         shutil.rmtree("./wallet_0")
 
     @pytest.fixture
@@ -41,7 +40,6 @@ class TestWallet:
         assert wallet.empty_wallet is True, "Wallet isn't empty"
 
         del wallet.wallet_queue_file
-
         shutil.rmtree("./wallet_0")
 
     def test_if_creates_coins(
@@ -247,9 +245,7 @@ class TestWallet:
         wallet_instance_1_silver_coins = wallet_instance_1.get_coin("silver")
         wallet_instance_1_bronze_coins = wallet_instance_1.get_coin("bronze")
 
-        del (
-            wallet_instance_1.wallet_queue_file
-        )  # Two classes can't use the same queue file at the same time
+        del wallet_instance_1.wallet_queue_file
         del wallet_instance_1
 
         wallet_instance_2 = Wallet(1337)
@@ -267,11 +263,7 @@ class TestWallet:
             wallet_instance_1_bronze_coins == wallet_instance_2_bronze_coins
         ), "Bronze coin value doesn't match"
 
-        del (
-            wallet_instance_2.wallet_queue_file
-        )  # Two classes can't use the same queue file at the same time
-        del wallet_instance_2
-
+        del wallet_instance_2.wallet_queue_file
         shutil.rmtree("./wallet_1337")
 
     def test_if_two_wallets_with_different_id_have_different_coin_quantity_saved(
@@ -311,14 +303,30 @@ class TestWallet:
             "bronze"
         ), "Bronze coin value is the same"
 
-        del (
-            wallet_instance_1.wallet_queue_file
-        )  # Two classes can't use the same queue file at the same time
-        del wallet_instance_1
-        del (
-            wallet_instance_2.wallet_queue_file
-        )  # Two classes can't use the same queue file at the same time
-        del wallet_instance_2
-
+        del wallet_instance_1.wallet_queue_file
+        del wallet_instance_2.wallet_queue_file
         shutil.rmtree("./wallet_9998")
         shutil.rmtree("./wallet_9999")
+
+    def test_if_raises_exception_correctly_when_a_wallet_have_more_than_one_queue_item_saved(
+        self,
+    ):
+        expected_exception_message = (
+            "For some reason, the queue had more than 1 item"
+        )
+
+        wallet = Wallet()
+        wallet.create_coins("gold")
+        wallet.add_coin_exchange_values("gold", 100)
+        wallet.save_wallet_contents()
+        wallet.wallet_queue_file.put("Content")
+
+        with pytest.raises(Exception) as exc_info:
+            wallet.save_wallet_contents()
+
+        assert (
+            str(exc_info.value) == expected_exception_message
+        ), "Wrong exception message"
+
+        del wallet.wallet_queue_file
+        shutil.rmtree("./wallet_0")
