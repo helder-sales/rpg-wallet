@@ -12,7 +12,7 @@ class Wallet:
             chunksize=1,
             autosave=True,
         )
-        self.empty_wallet: bool = None
+        self.empty_wallet: bool = True
         self.__coin: IndexedOrderedDict[
             dict[int]
         ] = self.__get_wallet_contents()
@@ -33,7 +33,7 @@ class Wallet:
 
     def create_coins(self, *coins: str) -> None:
         for coin in coins:
-            self.__coin.update({coin: dict(exchange_value=0, quantity=0)})
+            self.__coin.update({coin: {"exchange_value": 0, "quantity": 0}})
 
     def add_coin_exchange_values(self, coin: str, value: int) -> None:
         self.__coin[coin]["exchange_value"] = value // 1
