@@ -182,7 +182,12 @@ class TestWallet:
         self,
         coin_types_and_exchange_values: pytest.fixture,
     ):
-        expected_exception_message = "Insufficient coins"
+        expected_exception_message = (
+            "Insufficient coins! Missing:\n\n"
+            "gold: 1\n"
+            "silver: 0\n"
+            "bronze: 0\n"
+        )
 
         self.wallet.add_coin("gold", 110)
 
@@ -193,8 +198,15 @@ class TestWallet:
             str(exc_info.value) == expected_exception_message
         ), "Wrong exception message"
 
+        expected_exception_message = (
+            "Insufficient coins! Missing:\n\n"
+            "gold: 5\n"
+            "silver: 1\n"
+            "bronze: 0\n"
+        )
+
         with pytest.raises(ValueError) as exc_info:
-            self.wallet.remove_coin("gold", 110.01)
+            self.wallet.remove_coin("gold", 115.01)
 
         assert (
             str(exc_info.value) == expected_exception_message
@@ -205,8 +217,10 @@ class TestWallet:
         coin_types_and_exchange_values: pytest.fixture,
     ):
         expected_returned_str_from_object = (
-            "gold: 100\n" "silver: 10\n" "bronze: 1\n"
-        )
+            "gold: 100\n"
+            "silver: 10\n"
+            "bronze: 1\n"
+        )  # fmt: skip
 
         self.wallet.add_coin("gold", 100)
         self.wallet.add_coin("silver", 10)
