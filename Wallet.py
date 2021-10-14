@@ -8,7 +8,7 @@ from copy import deepcopy
 
 class Wallet:
     def __init__(self, wallet_id: int = 0) -> None:
-        self.wallet_queue_file: Queue = Queue(
+        self.wallet_queue: Queue = Queue(
             f"./wallet_{wallet_id}",
             chunksize=1,
             autosave=True,
@@ -225,7 +225,7 @@ class Wallet:
         self,
         contents: IndexedOrderedDict[dict[int]],
     ) -> None:
-        self.wallet_queue_file.put(contents)
+        self.wallet_queue.put(contents)
 
     def __retrieve_wallet_contents_from_queue(
         self,
@@ -234,10 +234,10 @@ class Wallet:
             dict()
         )
 
-        if not self.wallet_queue_file.empty():
-            wallet_content = self.wallet_queue_file.get()
+        if not self.wallet_queue.empty():
+            wallet_content = self.wallet_queue.get()
 
-            if not self.wallet_queue_file.empty():
+            if not self.wallet_queue.empty():
                 raise Exception(
                     "For some reason, the queue had more than 1 item"
                 )

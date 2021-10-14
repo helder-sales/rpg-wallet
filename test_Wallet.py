@@ -12,20 +12,20 @@ class TestWallet:
 
         yield
 
-        del self.wallet.wallet_queue_file
+        del self.wallet.wallet_queue
         shutil.rmtree("./wallet_0")
 
     @pytest.fixture
-    def coin_types(
+    def wallet_object_with_coin_types(
         self,
         wallet_object: pytest.fixture,
     ) -> None:
         self.wallet.create_coins("gold", "silver", "bronze")
 
     @pytest.fixture
-    def coin_types_and_exchange_values(
+    def wallet_object_with_coin_types_and_exchange_values(
         self,
-        coin_types: pytest.fixture,
+        wallet_object_with_coin_types: pytest.fixture,
     ) -> None:
         self.wallet.add_coin_exchange_values("gold", 0)
         self.wallet.add_coin_exchange_values("silver", 100)
@@ -53,9 +53,9 @@ class TestWallet:
         wallet_instance_2.add_coin("bronze", 0)
         wallet_instance_2.save_wallet_contents()
 
-        del wallet_instance_1.wallet_queue_file
+        del wallet_instance_1.wallet_queue
         del wallet_instance_1
-        del wallet_instance_2.wallet_queue_file
+        del wallet_instance_2.wallet_queue
         del wallet_instance_2
 
         yield
@@ -68,7 +68,7 @@ class TestWallet:
 
         assert wallet.empty_wallet is True, "Wallet isn't empty"
 
-        del wallet.wallet_queue_file
+        del wallet.wallet_queue
         shutil.rmtree("./wallet_0")
 
     def test_if_creates_coins(
@@ -87,7 +87,7 @@ class TestWallet:
 
     def test_if_adds_coin_exchange_values(
         self,
-        coin_types: pytest.fixture,
+        wallet_object_with_coin_types: pytest.fixture,
     ):
         expected_gold_coins = 0
         expected_silver_coins = 100
@@ -111,7 +111,7 @@ class TestWallet:
 
     def test_if_adds_coins_correctly(
         self,
-        coin_types_and_exchange_values: pytest.fixture,
+        wallet_object_with_coin_types_and_exchange_values: pytest.fixture,
     ):
         expected_gold_coins = 10
         expected_silver_coins = 51
@@ -133,7 +133,7 @@ class TestWallet:
 
     def test_if_adds_coins_up_to_two_decimal_places_and_ignores_beyond_that(
         self,
-        coin_types_and_exchange_values: pytest.fixture,
+        wallet_object_with_coin_types_and_exchange_values: pytest.fixture,
     ):
         expected_gold_coins = 1
         expected_silver_coins = 50
@@ -157,7 +157,7 @@ class TestWallet:
 
     def test_if_removes_coin_correctly(
         self,
-        coin_types_and_exchange_values: pytest.fixture,
+        wallet_object_with_coin_types_and_exchange_values: pytest.fixture,
     ):
         expected_gold_coins = 100
         expected_silver_coins = 0
@@ -182,7 +182,7 @@ class TestWallet:
 
     def test_if_removes_coin_up_to_two_decimal_places_and_ignores_beyond_that(
         self,
-        coin_types_and_exchange_values: pytest.fixture,
+        wallet_object_with_coin_types_and_exchange_values: pytest.fixture,
     ):
         expected_gold_coins = 1
         expected_silver_coins = 49
@@ -209,7 +209,7 @@ class TestWallet:
 
     def test_if_removes_coin_and_raises_exception_correctly_when_balance_is_negative(
         self,
-        coin_types_and_exchange_values: pytest.fixture,
+        wallet_object_with_coin_types_and_exchange_values: pytest.fixture,
     ):
         expected_exception_message = (
             "Insufficient coins! Missing:\n\n"
@@ -243,7 +243,7 @@ class TestWallet:
 
     def test_if_prints_wallet_contents_successfully(
         self,
-        coin_types_and_exchange_values: pytest.fixture,
+        wallet_object_with_coin_types_and_exchange_values: pytest.fixture,
     ):
         expected_returned_str_from_object = (
             "gold: 100\n"
@@ -262,15 +262,13 @@ class TestWallet:
 
     def test_if_saves_wallet_contents_successfully(
         self,
-        coin_types_and_exchange_values: pytest.fixture,
+        wallet_object_with_coin_types_and_exchange_values: pytest.fixture,
     ):
         self.wallet.save_wallet_contents()
 
-        assert (
-            not self.wallet.wallet_queue_file.empty()
-        ), "Failed to save to queue"
+        assert not self.wallet.wallet_queue.empty(), "Failed to save to queue"
 
-        self.wallet.wallet_queue_file.get()
+        self.wallet.wallet_queue.get()
 
     def test_if_retrieves_wallet_contents_from_another_instance_with_same_id_successfully(
         self,
@@ -288,7 +286,7 @@ class TestWallet:
         wallet_instance_1_silver_coins = wallet_instance_1.get_coin("silver")
         wallet_instance_1_bronze_coins = wallet_instance_1.get_coin("bronze")
 
-        del wallet_instance_1.wallet_queue_file
+        del wallet_instance_1.wallet_queue
         del wallet_instance_1
 
         wallet_instance_2 = Wallet(1337)
@@ -306,7 +304,7 @@ class TestWallet:
             wallet_instance_1_bronze_coins == wallet_instance_2_bronze_coins
         ), "Bronze coin value doesn't match"
 
-        del wallet_instance_2.wallet_queue_file
+        del wallet_instance_2.wallet_queue
         shutil.rmtree("./wallet_1337")
 
     def test_if_two_wallets_with_different_ids_have_different_coin_quantity_saved(
@@ -331,9 +329,9 @@ class TestWallet:
             "bronze"
         ), "Bronze coin value is the same"
 
-        del wallet_instance_3.wallet_queue_file
+        del wallet_instance_3.wallet_queue
         del wallet_instance_3
-        del wallet_instance_4.wallet_queue_file
+        del wallet_instance_4.wallet_queue
         del wallet_instance_4
 
     def test_if_raises_exception_correctly_when_a_wallet_have_more_than_one_queue_item_saved(
@@ -347,7 +345,7 @@ class TestWallet:
         wallet.create_coins("gold")
         wallet.add_coin_exchange_values("gold", 100)
         wallet.save_wallet_contents()
-        wallet.wallet_queue_file.put("Content")
+        wallet.wallet_queue.put("Content")
 
         with pytest.raises(Exception) as exc_info:
             wallet.save_wallet_contents()
@@ -356,5 +354,5 @@ class TestWallet:
             str(exc_info.value) == expected_exception_message
         ), "Wrong exception message"
 
-        del wallet.wallet_queue_file
+        del wallet.wallet_queue
         shutil.rmtree("./wallet_0")
