@@ -12,9 +12,6 @@ class TestWallet:
 
         yield
 
-        if not self.wallet.wallet_queue_file.empty():
-            self.wallet.wallet_queue_file.get()
-
         del self.wallet.wallet_queue_file
         shutil.rmtree("./wallet_0")
 
@@ -33,6 +30,38 @@ class TestWallet:
         self.wallet.add_coin_exchange_values("gold", 0)
         self.wallet.add_coin_exchange_values("silver", 100)
         self.wallet.add_coin_exchange_values("bronze", 100)
+
+    @pytest.fixture
+    def two_distinct_wallet_objects_with_different_coin_quantity(self) -> None:
+        wallet_instance_1 = Wallet(9998)
+        wallet_instance_1.create_coins("gold", "silver", "bronze")
+        wallet_instance_1.add_coin_exchange_values("gold", 0)
+        wallet_instance_1.add_coin_exchange_values("silver", 100)
+        wallet_instance_1.add_coin_exchange_values("bronze", 100)
+        wallet_instance_1.add_coin("gold", 100)
+        wallet_instance_1.add_coin("silver", 10)
+        wallet_instance_1.add_coin("bronze", 1)
+        wallet_instance_1.save_wallet_contents()
+
+        wallet_instance_2 = Wallet(9999)
+        wallet_instance_2.create_coins("gold", "silver", "bronze")
+        wallet_instance_2.add_coin_exchange_values("gold", 0)
+        wallet_instance_2.add_coin_exchange_values("silver", 100)
+        wallet_instance_2.add_coin_exchange_values("bronze", 100)
+        wallet_instance_2.add_coin("gold", 50)
+        wallet_instance_2.add_coin("silver", 5)
+        wallet_instance_2.add_coin("bronze", 0)
+        wallet_instance_2.save_wallet_contents()
+
+        del wallet_instance_1.wallet_queue_file
+        del wallet_instance_1
+        del wallet_instance_2.wallet_queue_file
+        del wallet_instance_2
+
+        yield
+
+        shutil.rmtree("./wallet_9998")
+        shutil.rmtree("./wallet_9999")
 
     def test_if_wallet_returns_empty_wallet(self):
         wallet = Wallet()
@@ -280,47 +309,32 @@ class TestWallet:
         del wallet_instance_2.wallet_queue_file
         shutil.rmtree("./wallet_1337")
 
-    def test_if_two_wallets_with_different_id_have_different_coin_quantity_saved(
+    def test_if_two_wallets_with_different_ids_have_different_coin_quantity_saved(
         self,
+        two_distinct_wallet_objects_with_different_coin_quantity: pytest.fixture,
     ):
-        wallet_instance_1 = Wallet(9998)
-        wallet_instance_1.create_coins("gold", "silver", "bronze")
-        wallet_instance_1.add_coin_exchange_values("gold", 0)
-        wallet_instance_1.add_coin_exchange_values("silver", 100)
-        wallet_instance_1.add_coin_exchange_values("bronze", 100)
-        wallet_instance_1.add_coin("gold", 100)
-        wallet_instance_1.add_coin("silver", 10)
-        wallet_instance_1.add_coin("bronze", 1)
-        wallet_instance_1.save_wallet_contents()
+        # Wallet IDs from the fixture
+        wallet_instance_3 = Wallet(9998)
+        wallet_instance_4 = Wallet(9999)
 
-        wallet_instance_2 = Wallet(9999)
-        wallet_instance_2.create_coins("gold", "silver", "bronze")
-        wallet_instance_2.add_coin_exchange_values("gold", 0)
-        wallet_instance_2.add_coin_exchange_values("silver", 100)
-        wallet_instance_2.add_coin_exchange_values("bronze", 100)
-        wallet_instance_2.add_coin("gold", 50)
-        wallet_instance_2.add_coin("silver", 5)
-        wallet_instance_2.add_coin("bronze", 0)
-        wallet_instance_2.save_wallet_contents()
-
-        assert wallet_instance_1.get_coin("gold") != wallet_instance_2.get_coin(
+        assert wallet_instance_3.get_coin("gold") != wallet_instance_4.get_coin(
             "gold"
         ), "Gold coin value is the same"
-        assert wallet_instance_1.get_coin(
+        assert wallet_instance_3.get_coin(
             "silver"
-        ) != wallet_instance_2.get_coin(
+        ) != wallet_instance_4.get_coin(
             "silver"
         ), "Silver coin value is the same"
-        assert wallet_instance_1.get_coin(
+        assert wallet_instance_3.get_coin(
             "bronze"
-        ) != wallet_instance_2.get_coin(
+        ) != wallet_instance_4.get_coin(
             "bronze"
         ), "Bronze coin value is the same"
 
-        del wallet_instance_1.wallet_queue_file
-        del wallet_instance_2.wallet_queue_file
-        shutil.rmtree("./wallet_9998")
-        shutil.rmtree("./wallet_9999")
+        del wallet_instance_3.wallet_queue_file
+        del wallet_instance_3
+        del wallet_instance_4.wallet_queue_file
+        del wallet_instance_4
 
     def test_if_raises_exception_correctly_when_a_wallet_have_more_than_one_queue_item_saved(
         self,
