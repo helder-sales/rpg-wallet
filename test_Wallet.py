@@ -139,10 +139,10 @@ class TestWallet:
         expected_silver_coins = 50
         expected_bronze_coins = 22
 
-        self.wallet.add_coin("gold", 1.5)
+        self.wallet.add_coin("gold", 1.509)
         self.wallet.add_coin("silver", 0.222)
         self.wallet.add_coin(
-            "bronze", 0.99
+            "bronze", 0.991
         )  # lowest coin should not add decimal values
 
         assert (
@@ -191,10 +191,10 @@ class TestWallet:
         self.wallet.add_coin("gold", 3)
         self.wallet.add_coin("silver", 0)
         self.wallet.add_coin("bronze", 0)
-        self.wallet.remove_coin("gold", 1.5)
+        self.wallet.remove_coin("gold", 1.509)
         self.wallet.remove_coin("silver", 0.111)
         self.wallet.remove_coin(
-            "bronze", 1.99
+            "bronze", 1.991
         )  # lowest coin should not remove decimal values
 
         assert (
