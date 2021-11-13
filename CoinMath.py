@@ -13,7 +13,9 @@ class CoinMath:
     ) -> IndexedOrderedDict[dict[int]]:
         wallet_coins = deepcopy(wallet_coins_obj)
         wallet_coins[coin_to_add]["quantity"] += quantity // 1
-        wallet_coins = self.__convert_coins_to_integer(wallet_coins)
+        wallet_coins = self.__distribute_coins_according_to_exchange(
+            wallet_coins
+        )
         return wallet_coins
 
     def add_coin_float(
@@ -58,11 +60,15 @@ class CoinMath:
             missed_coins: str = self.__get_missing_coins(
                 wallet_coins, balance, last_coin
             )
-            wallet_coins = self.__convert_coins_to_integer(wallet_coins)
+            wallet_coins = self.__distribute_coins_according_to_exchange(
+                wallet_coins
+            )
             raise ValueError(f"Insufficient coins! Missing:\n\n{missed_coins}")
 
         wallet_coins[last_coin]["quantity"] = balance
-        wallet_coins = self.__convert_coins_to_integer(wallet_coins)
+        wallet_coins = self.__distribute_coins_according_to_exchange(
+            wallet_coins
+        )
         return wallet_coins
 
     def remove_coin_float(
@@ -94,14 +100,18 @@ class CoinMath:
             missed_coins: str = self.__get_missing_coins(
                 wallet_coins, balance, last_coin
             )
-            wallet_coins = self.__convert_coins_to_integer(wallet_coins)
+            wallet_coins = self.__distribute_coins_according_to_exchange(
+                wallet_coins
+            )
             raise ValueError(f"Insufficient coins! Missing:\n\n{missed_coins}")
 
         wallet_coins[last_coin]["quantity"] = balance
-        wallet_coins = self.__convert_coins_to_integer(wallet_coins)
+        wallet_coins = self.__distribute_coins_according_to_exchange(
+            wallet_coins
+        )
         return wallet_coins
 
-    def __convert_coins_to_integer(
+    def __distribute_coins_according_to_exchange(
         self,
         coins: IndexedOrderedDict[dict[int]],
     ) -> IndexedOrderedDict[dict[int]]:
@@ -186,7 +196,9 @@ class CoinMath:
         from Wallet import Wallet
 
         missed_coins[last_coin]["quantity"] = abs(balance)
-        missed_coins = self.__convert_coins_to_integer(missed_coins)
+        missed_coins = self.__distribute_coins_according_to_exchange(
+            missed_coins
+        )
         return Wallet.format_coins_into_a_string(missed_coins)
 
     def __get_exchange_value_in_terms_of_lowest_coin(
