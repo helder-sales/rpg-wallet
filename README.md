@@ -5,8 +5,8 @@ An wallet (originally meant to be used on tabletop RPG games) capable of arbitra
 Please install the python dependencies below manually, or from the requirements.txt:
 
 ```bash
-pytest==6.2.4
-persist-queue==0.6.0
+pytest==6.2.5
+persist-queue==0.7.0
 indexed==1.2.1
 ```
 
