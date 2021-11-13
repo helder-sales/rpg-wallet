@@ -11,7 +11,7 @@ class Wallet:
             chunksize=1,
             autosave=True,
         )
-        self.coin_math = CoinMath()
+        self.coin_math: CoinMath = CoinMath()
         self.empty_wallet: bool = True
         self.coins: IndexedOrderedDict[dict[int]] = self.get_wallet_contents()
 

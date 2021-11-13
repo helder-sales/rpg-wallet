@@ -9,9 +9,12 @@ class CoinMath:
         pass
 
     def add_coin_int(
-        self, wallet_coins_obj, coin_to_add: str, quantity: int
+        self,
+        wallet_coins_obj: IndexedOrderedDict[dict[int]],
+        coin_to_add: str,
+        quantity: int,
     ) -> IndexedOrderedDict[dict[int]]:
-        wallet_coins = deepcopy(wallet_coins_obj)
+        wallet_coins: IndexedOrderedDict[dict[int]] = deepcopy(wallet_coins_obj)
         wallet_coins[coin_to_add]["quantity"] += quantity // 1
         wallet_coins = self.__distribute_coins_according_to_exchange(
             wallet_coins
@@ -19,9 +22,12 @@ class CoinMath:
         return wallet_coins
 
     def add_coin_float(
-        self, wallet_coins_obj, coin: str, quantity: float
+        self,
+        wallet_coins_obj: IndexedOrderedDict[dict[int]],
+        coin: str,
+        quantity: float,
     ) -> IndexedOrderedDict[dict[int]]:
-        wallet_coins = deepcopy(wallet_coins_obj)
+        wallet_coins: IndexedOrderedDict[dict[int]] = deepcopy(wallet_coins_obj)
         integer_value: int
         decimal_value: int
         integer_value, decimal_value = CoinMath.__separate_decimal_value(
@@ -45,9 +51,12 @@ class CoinMath:
         return wallet_coins
 
     def remove_coin_int(
-        self, wallet_coins_obj, coin: str, quantity: int
+        self,
+        wallet_coins_obj: IndexedOrderedDict[dict[int]],
+        coin: str,
+        quantity: int,
     ) -> IndexedOrderedDict[dict[int]]:
-        wallet_coins = deepcopy(wallet_coins_obj)
+        wallet_coins: IndexedOrderedDict[dict[int]] = deepcopy(wallet_coins_obj)
         quantity_converted: int = self.__convert_coins_to_lowest(
             wallet_coins, coin, quantity
         )
@@ -72,9 +81,12 @@ class CoinMath:
         return wallet_coins
 
     def remove_coin_float(
-        self, wallet_coins_obj, coin: str, quantity: float
+        self,
+        wallet_coins_obj: IndexedOrderedDict[dict[int]],
+        coin: str,
+        quantity: float,
     ) -> IndexedOrderedDict[dict[int]]:
-        wallet_coins = deepcopy(wallet_coins_obj)
+        wallet_coins: IndexedOrderedDict[dict[int]] = deepcopy(wallet_coins_obj)
         integer_value: int
         decimal_value: int
         integer_value, decimal_value = CoinMath.__separate_decimal_value(
@@ -145,11 +157,11 @@ class CoinMath:
 
     def __convert_coins_to_lowest(
         self,
-        wallet_coins_obj,
+        wallet_coins_obj: IndexedOrderedDict[dict[int]],
         coin: str,
         quantity: int = 0,
     ) -> IndexedOrderedDict[dict[int]] | int:
-        wallet_coins = deepcopy(wallet_coins_obj)
+        wallet_coins: IndexedOrderedDict[dict[int]] = deepcopy(wallet_coins_obj)
 
         if coin == "all":
             for idx in range(0, len(wallet_coins) - 1):
@@ -181,10 +193,14 @@ class CoinMath:
 
             return quantity
 
-    def __get_coin_name(self, coins, idx_to_get_name: int) -> str:
+    def __get_coin_name(
+        self, coins: IndexedOrderedDict[dict[int]], idx_to_get_name: int
+    ) -> str:
         return coins.keys()[idx_to_get_name]
 
-    def __get_coin_idx(self, coins, coin_to_get_idx: str) -> int:
+    def __get_coin_idx(
+        self, coins: IndexedOrderedDict[dict[int]], coin_to_get_idx: str
+    ) -> int:
         return coins.keys().index(coin_to_get_idx)
 
     def __get_missing_coins(
@@ -203,10 +219,10 @@ class CoinMath:
 
     def __get_exchange_value_in_terms_of_lowest_coin(
         self,
-        wallet_coins_obj,
+        wallet_coins_obj: IndexedOrderedDict[dict[int]],
         coin_base: str,
     ) -> int:
-        wallet_coins = deepcopy(wallet_coins_obj)
+        wallet_coins: IndexedOrderedDict[dict[int]] = deepcopy(wallet_coins_obj)
         exchange_in_terms_of_lowest_coin: int = 1
         idx_of_next_coin_from_coin_base: int = (
             self.__get_coin_idx(wallet_coins, coin_base) + 1
