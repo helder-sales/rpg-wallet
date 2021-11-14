@@ -5,6 +5,8 @@ from indexed import IndexedOrderedDict
 
 
 class CoinMath:
+    MAX_DECIMAL_PLACES: int = 2
+
     def __init__(self) -> None:
         pass
 
@@ -45,9 +47,12 @@ class CoinMath:
             decimal_value = (
                 decimal_value
                 * wallet_coins[coin_to_add_decimal_part]["exchange_value"]
-            ) // 100
+            ) // (10 ** CoinMath.MAX_DECIMAL_PLACES)
             wallet_coins[coin_to_add_decimal_part]["quantity"] += decimal_value
 
+        wallet_coins = self.__distribute_coins_according_to_exchange_values(
+            wallet_coins
+        )
         return wallet_coins
 
     def remove_coin_int(
@@ -104,7 +109,7 @@ class CoinMath:
                 wallet_coins, coin
             )
             * decimal_value
-        ) // 100
+        ) // (10 ** CoinMath.MAX_DECIMAL_PLACES)
         wallet_coins = self.__convert_coins_to_lowest(wallet_coins, "all")
         least_value_coin_idx: int = len(wallet_coins) - 1
         least_value_coin: str = self.__get_coin_name(
@@ -246,7 +251,12 @@ class CoinMath:
     def __separate_decimal_value(quantity: float) -> tuple[int, int]:
         qty_as_str: str = f"{float(quantity)}"
         idx_of_dot: int = qty_as_str.index(".")
-        qty_as_str_trunc: str = qty_as_str[0 : (idx_of_dot + 2) + 1]
-        decimal_value: int = int((Decimal(qty_as_str_trunc) % 1) * 100)
+        qty_as_str_trunc: str = qty_as_str[
+            0 : (idx_of_dot + CoinMath.MAX_DECIMAL_PLACES) + 1
+        ]
+        decimal_value: int = int(
+            (Decimal(qty_as_str_trunc) % 1)
+            * (10 ** CoinMath.MAX_DECIMAL_PLACES)
+        )
         integer_value: int = int(quantity // 1)
         return integer_value, decimal_value
