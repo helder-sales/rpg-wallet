@@ -68,9 +68,6 @@ class TestWallet:
 
         assert wallet.empty_wallet is True, "Wallet isn't empty"
 
-        del wallet.wallet_queue
-        shutil.rmtree("./wallet_0")
-
     def test_if_creates_coins(
         self,
         wallet_object: pytest.fixture,

@@ -130,3 +130,6 @@ dmypy.json
 
 # Wallet folders
 wallet_*/
+
+# Testmon files
+.testmondata
